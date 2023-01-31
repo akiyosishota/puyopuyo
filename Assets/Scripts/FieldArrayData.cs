@@ -6,42 +6,41 @@ using UnityEngine.SceneManagement;
 public class FieldArrayData : MonoBehaviour
 {
     /// <summary>
-    /// 「_movePuyoY」はぷよが生成されるポジション
-    /// 「_minX」「_minY」「_maxX」「_maxY」で
-    /// 動かすぷよの移動させる座標の上限値、下限値を設定
-    /// 「_moveX」「_moveY」はConstを経て「_movePuyo」のポジションを変更する変数
-    /// 「_deltaX」「_deltaY」はぷよを動かすための座標の加算、減算するための変数
-    /// 「_rotate」は「_movePuyo」を回転させ、回転による移動の制限をつけるための変数
-    /// 「_puyoFallTime」は経過時間ごとにぷよを自動で落下させるための時間変数
+    /// 「_movePuyoY」「_movePuyoX」はぷよが生成されるポジション
+    /// 「_nextFirstX」「_nextFirstY」はネクストのぷよが生成されるポジション
+    /// 「_nextSecondX」「_nextSecondY」は２つ目のネクストのぷよが生成されるポジション
+    /// 「_outX」「_outY」は×マークの位置（ゲームオーバー）
+    /// 「_maxX」「_maxY」は配列の最大値
     /// </summary>
-    private float _movePuyoY = 12;
-    private int _movePuyoX = 2;
-    private int _maxX = 6;
-    private int _maxY = 13;
-    private int _outX = 2;
-    private int _outY = 11;
-    private int _nextFirstX = 7;
-    private int _nextFirstY = 10;
-    private int _nextSecondX = 8;
-    private float _nextSecondY = 7.5f;
-
+    private const float _movePuyoY = 12;
+    private const int _movePuyoX = 2;
+    private const int _nextFirstX = 7;
+    private const int _nextFirstY = 10;
+    private const int _nextSecondX = 8;
+    private const float _nextSecondY = 7.5f;
+    private const int _outX = 2;
+    private const int _outY = 11;
+    private const int _maxX = 6;
+    private const int _maxY = 13;
+    /// <summary>
+    /// 「_fieldPuyoData」は置かれているぷよぷよの配列
+    /// 「puyos」は4色のぷよを格納する
+    /// </summary>
     public GameObject[,] _fieldPuyoData;
-    // 縦横の最大数
-    const int FIELD_SIZE_X = 6;
-    const int FIELD_SIZE_Y = 13;
+    public GameObject[] puyos;
 
     GameObject _movePuyo;
     GameObject _nextPuyoFirst;
     GameObject _nextPuyoSecond;
 
-    private Text _gameOver = default;
     ///<summary>
     ///動かすふたつのぷよの親になるPrefabを入れる
+    ///ゲームオーバーになった時に表示させるUIを入れる
     ///</summary>
     [Header("動かすぷよの親のPrefabを挿入")]
     [SerializeField] private GameObject _movePuyoPrefab = null;
     [SerializeField] private GameObject _textUi = default;
-    public GameObject[] puyos;
+    private Text _gameOver = default;
     List<GameObject> checkZumiFieldBlocks = new List<GameObject>();
 
     private void Awake()
@@ -52,30 +51,20 @@ public class FieldArrayData : MonoBehaviour
     }
     private void Update()
     {
+        //「R」キーを押されたらやりなおし
         if( Input.GetKeyDown(KeyCode.R))
         {
             SceneManager.LoadScene("PuyoPuyo");
         }
     }
-    void Hairetu()
-    {
-        for(int x = 0; x < 6; x++)
-        {
-            for(int y=0; y < 10; y++)
-            {
-                GameObject piece = Instantiate(puyos[Random.Range(0, 4)]);
-                piece.transform.position = new Vector3(x, y, 0);
-                _fieldPuyoData[x, y] = piece;
-            }
-        }
-    }
-
+    // ぷよが置かれた＆消されたときに落下させる
     public void Drop()
     {
+        //「nullCount」は何マス分落下させるかの変数
         int nullCount = 0;
-        for (int x = 0; x < 6; x++)
+        for (int x = 0; x < _maxX; x++)
         {
-            for (int y = 0; y < 13; y++)
+            for (int y = 0; y < _maxY; y++)
             {
                 if(_fieldPuyoData[x, y] == null)
                 {
@@ -91,6 +80,8 @@ public class FieldArrayData : MonoBehaviour
             nullCount = 0;
         }
 
+        //同色4つ以上つながっていたら消す
+        //連鎖が終了すると再度ぷよを生成
         if (RenketuAri())
         {
             StartCoroutine(Erase());
@@ -108,11 +99,12 @@ public class FieldArrayData : MonoBehaviour
         }
     }
 
+    //同色4つ以上つながっていたら消す
     bool RenketuAri()
     {
-        for (int x = 0; x < 6; x++)
+        for (int x = 0; x < _maxX; x++)
         {
-            for (int y = 0; y < 13; y++)
+            for (int y = 0; y < _maxY; y++)
             {
                 checkZumiFieldBlocks.Clear();
                 if (Renketusuu(x, y, 0) >= 4 && _fieldPuyoData[x, y] != null)
@@ -127,9 +119,9 @@ public class FieldArrayData : MonoBehaviour
         IEnumerator Erase()
     {
         yield return new WaitForSeconds(0.5f);
-        for (int x = 0; x < 6; x++)
+        for (int x = 0; x < _maxX; x++)
         {
-            for (int y = 0; y < 13; y++)
+            for (int y = 0; y < _maxY; y++)
             {
                 checkZumiFieldBlocks.Clear();
                 if(Renketusuu(x, y, 0) >= 4 && _fieldPuyoData[x, y] != null)
@@ -142,6 +134,7 @@ public class FieldArrayData : MonoBehaviour
         Drop();
     }
 
+    //それぞれの色の連結数を調べる
     int Renketusuu(int x,int y, int renketusuu)
     {
         if(_fieldPuyoData[x, y] == null || checkZumiFieldBlocks.Contains(_fieldPuyoData[x, y]))
@@ -169,11 +162,11 @@ public class FieldArrayData : MonoBehaviour
         return renketusuu;
     }
     /// <summary>
-    /// 操作するぷよの
-    /// 「_headPuyo」=上のぷよ
-    /// 「_tailPuyo」=下のぷよ
-    /// 「_movePuyo」=操作する2つのぷよ
-    /// をGameObject「Stage」の子として生成
+    /// ゲームがスタートしたら
+    /// 動かす「_movePuyo」
+    /// ネクストの「_nextPuyoFirst」
+    /// 2つめのネクストの「_nextPuyoSecond」
+    /// を生成
     /// </summary>
     public void StartCleatePuyo()
     {
@@ -206,6 +199,12 @@ public class FieldArrayData : MonoBehaviour
         _nextPuyoSecondTail.transform.position = new Vector2(_nextSecondX, _nextSecondY - 1);
         _nextPuyoSecondTail.transform.SetParent(_nextPuyoSecond.transform, true);
     }
+
+    /// <summary>
+    /// ネクストのぷよを動かすぷよへ取り出す
+    /// 2つめのネクストのぷよをネクストへ取り出す
+    /// 2つめのネクストのぷよを新しく生成する
+    /// </summary>
     public void CleatePuyo()
     {
         _movePuyo = _nextPuyoFirst;

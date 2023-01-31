@@ -4,28 +4,15 @@ using UnityEngine;
 
 public class MovePuyo : MonoBehaviour
 {
-    private int _moveX = 0;
-    private float _moveY = 6;
+    /// <summary>
+    /// 「_minX」「_maxX」はX座標の最小値、最大値
+    /// 「_minY」はY座標の最小値
+    /// 「_puyoFallTime」は自動落下させるためのタイム変数
+    /// </summary>
     private int _minX = 0;
     private int _maxX = 6;
     private float _minY = 0;
-    private int _maxY = 13;
     private float _puyoFallTime = 0;
-
-    GameObject _headPuyo;
-    GameObject _tailPuyo;
-
-    FieldArrayData GameControl;
-    /// <summary>
-    /// 「_minX」「_minY」「_maxX」「_maxY」で
-    /// 動かすぷよの移動させる座標の上限値、下限値を設定
-    /// </summary>
-    private void Start()
-    {
-      _headPuyo = transform.GetChild(0).gameObject;
-      _tailPuyo = transform.GetChild(1).gameObject; 
-    }
-
     private void Update()
     {
         ///<summary>
@@ -65,6 +52,7 @@ public class MovePuyo : MonoBehaviour
             }
         }
         //「↓」キーを押すと下に移動する
+        //移動した際は自動落下の秒数をリセット
         if (Input.GetKeyDown(KeyCode.DownArrow))
         {
             this.gameObject.transform.position += new Vector3(0, -1, 0);
@@ -113,6 +101,8 @@ public class MovePuyo : MonoBehaviour
         }
     }
 
+    //壁側にいるときや床面にいるときの一部条件で回転できない＆移動できないようにする
+    //また置かれているぷよに対しても回転＆移動できないようにする
     bool CanMove()
     {
         foreach (Transform childPuyo in transform)
@@ -131,6 +121,7 @@ public class MovePuyo : MonoBehaviour
         }
         return true;
     }
+    //ぷよが置かれたときに配列の中に格納する
     public void LandingPuyo()
     {
         foreach(Transform ChildPuyo in transform)
