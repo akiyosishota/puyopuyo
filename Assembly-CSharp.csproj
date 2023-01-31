@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\MovePuyo.cs" />
     <Compile Include="Assets\Scripts\FieldArrayData.cs" />
+    <Compile Include="Assets\Scripts\GameStart.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
